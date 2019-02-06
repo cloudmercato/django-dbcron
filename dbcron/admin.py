@@ -8,6 +8,7 @@ class JobAdmin(admin.ModelAdmin):
     list_display = ['name', 'func', 'is_active', 'next_time', 'sec', 'min', 'hou', 'dom',
                     'mon', 'dow', 'yea']
     list_filter = ['is_active', 'func']
+    actions = ('make_disable', 'make_enable')
     ordering = ['name']
     fieldsets = (
         (_('Metadata'), {
@@ -31,3 +32,11 @@ class JobAdmin(admin.ModelAdmin):
             )
         }),
     )
+    
+    def make_disable(self, request, queryset):
+        queryset.update(is_active=False)
+    make_disable.short_description = _("Disable job(s)")
+
+    def make_enable(self, request, queryset):
+        queryset.update(is_active=True)
+    make_enable.short_description = _("Enable job(s)")
