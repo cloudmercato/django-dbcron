@@ -28,7 +28,7 @@ class Job(models.Model):
     )
     dom = models.CharField(
         max_length=50, verbose_name=_("day(s) of month"),
-        validators=[validators.DayOfMonthValidator()]
+        validators=[validators.DaysOfMonthValidator()]
     )
     mon = models.CharField(
         max_length=50, verbose_name=_("month"),
@@ -74,4 +74,6 @@ class Job(models.Model):
 
     @property
     def next_time(self):
-        return int(self.entry.next())
+        next_ = self.entry.next()
+        if next_ is not None:
+            return int(self.entry.next())

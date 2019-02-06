@@ -1,4 +1,7 @@
+from datetime import timedelta
 from django.contrib import admin
+from django.template.defaultfilters import timeuntil
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from dbcron import models
 
@@ -32,6 +35,14 @@ class JobAdmin(admin.ModelAdmin):
             )
         }),
     )
+    
+    def next_time(self, obj):
+        next_ = obj.next_time
+        if next_ is None:
+            return '-'
+        dst_date = now() + timedelta(seconds=next_)
+        return timeuntil(dst_date)
+    next_time.short_description = _("Next run")
     
     def make_disable(self, request, queryset):
         queryset.update(is_active=False)

@@ -48,7 +48,13 @@ class BaseCrontabValidator:
             )
 
     def validate_range(self, value, index):
-        min_, max_ = value.split('-')
+        try:
+            min_, max_ = value.split('-')
+        except ValueError:
+            raise validators.ValidationError(
+                message=_("Bad range format"),
+                code=self.code
+            )
         self.validate_int(min_, index)
         self.validate_int(max_, index)
         min_, max_ = int(min_), int(max_)
@@ -75,18 +81,24 @@ class BaseCrontabValidator:
             )
 
     def __call__(self, value):
+        value = str(value)
         values = value.split(',')
         for i, value in enumerate(values):
             if value.isdigit():
                 self.validate_int(value, i)
                 continue
+            elif value.startswith('-') and value[1:].isdigit():
+                raise validators.ValidationError(
+                    message=self.range_message % (self.int_min, self.int_max),
+                    code=self.code
+                )
+            elif value.startswith('*/'):
+                self.validate_frequency(value, i)
+                continue
             elif '-' in value:
                 self.validate_range(value, i)
                 continue
-            elif '/' in value:
-                self.validate_frequency(value, i)
-                continue
-            elif value in self.special_strings:
+            elif value.upper() in self.special_strings:
                 continue
             elif value in ['*', '?']:
                 continue
@@ -111,7 +123,7 @@ class HoursValidator(BaseCrontabValidator):
     int_max = 23
 
 
-class DayOfMonthValidator(BaseCrontabValidator):
+class DaysOfMonthValidator(BaseCrontabValidator):
     int_min = 1
     int_max = 31
     special_strings = ['L']
