@@ -3,6 +3,7 @@ import json
 from crontab import CronTab
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from dbcron import validators
 
 
 class Job(models.Model):
@@ -13,13 +14,34 @@ class Job(models.Model):
 
     is_active = models.BooleanField(default=False, verbose_name=_("is active"))
 
-    sec = models.CharField(max_length=50, default='0', verbose_name=_("second(s)"))
-    min = models.CharField(max_length=50, verbose_name=_("minute(s)"))
-    hou = models.CharField(max_length=50, verbose_name=_("hour(s)"))
-    dom = models.CharField(max_length=50, verbose_name=_("day(s) of month"))
-    mon = models.CharField(max_length=50, verbose_name=_("month"))
-    dow = models.CharField(max_length=50, verbose_name=_("day(s) of week"))
-    yea = models.CharField(max_length=50, default='*', verbose_name=_("year(s)"))
+    sec = models.CharField(
+        max_length=50, default='0', verbose_name=_("second(s)"),
+        validators=[validators.SecondsValidator()]
+    )
+    min = models.CharField(
+        max_length=50, verbose_name=_("minute(s)"),
+        validators=[validators.MinutesValidator()]
+    )
+    hou = models.CharField(
+        max_length=50, verbose_name=_("hour(s)"),
+        validators=[validators.HoursValidator()]
+    )
+    dom = models.CharField(
+        max_length=50, verbose_name=_("day(s) of month"),
+        validators=[validators.DayOfMonthValidator()]
+    )
+    mon = models.CharField(
+        max_length=50, verbose_name=_("month"),
+        validators=[validators.MonthValidator()]
+    )
+    dow = models.CharField(
+        max_length=50, verbose_name=_("day(s) of week"),
+        validators=[validators.DaysOfWeekValidator()]
+    )
+    yea = models.CharField(
+        max_length=50, default='*', verbose_name=_("year(s)"),
+        validators=[validators.YearsValidator()]
+    )
 
     class Meta:
         verbose_name = _("job")
@@ -27,8 +49,6 @@ class Job(models.Model):
 
     @property
     def raw_entry(self):
-        return ' '.join([self.min, self.hou, self.dom, self.mon,
-                         self.dow])
         return ' '.join([self.sec, self.min, self.hou, self.dom, self.mon,
                          self.dow, self.yea])
 
