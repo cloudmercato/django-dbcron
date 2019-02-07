@@ -8,8 +8,11 @@ from dbcron import validators
 
 class Job(models.Model):
     name = models.CharField(max_length=200, verbose_name=_("name"))
+    tag = models.CharField(max_length=150, verbose_name=_("tag"), blank=True, null=True)
     description = models.TextField(max_length=2000, verbose_name=_("description"), blank=True)
     func = models.CharField(max_length=250, verbose_name=_("function"))
+
+    args = models.TextField(max_length=2000, default='[]', verbose_name=_("arguments"))
     opts = models.TextField(max_length=2000, default='{}', verbose_name=_("options"))
 
     is_active = models.BooleanField(default=False, verbose_name=_("is active"))
@@ -68,8 +71,9 @@ class Job(models.Model):
 
     def run(self):
         func = self._get_func()
+        args = json.loads(self.args)
         opts = json.loads(self.opts)
-        result = func(**opts)
+        result = func(*args, **opts)
         return result
 
     @property

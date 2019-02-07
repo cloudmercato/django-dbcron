@@ -6,16 +6,16 @@ from dbcron import utils
 
 @admin.register(models.Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ['name', 'func', 'is_active', 'next_time', 'sec', 'min',
-                    'hou', 'dom', 'mon', 'dow', 'yea']
-    list_filter = ['is_active', 'func']
+    list_display = ['name', 'tag', 'func', 'is_active', 'next_time', 'sec',
+                    'min', 'hou', 'dom', 'mon', 'dow', 'yea']
+    list_filter = ['is_active', 'func', 'tag']
     actions = ('make_disable', 'make_enable')
     ordering = ['name']
     fieldsets = (
         (_('Metadata'), {
             'classes': ('wide',),
             'fields': (
-                ('name', 'is_active'),
+                ('name', 'tag', 'is_active'),
                 'description',
             )
         }),
@@ -23,6 +23,7 @@ class JobAdmin(admin.ModelAdmin):
             'classes': ('wide',),
             'fields': (
                 'func',
+                'args',
                 'opts',
             )
         }),

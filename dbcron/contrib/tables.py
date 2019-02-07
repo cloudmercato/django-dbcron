@@ -13,8 +13,8 @@ class JobTable(tables.Table):
 
     class Meta:
         model = models.Job
-        fields = sequence = ['name', 'func', 'is_active', 'next_time', 'sec',
-                             'min', 'hou', 'dom', 'mon', 'dow', 'yea']
+        fields = sequence = ['name', 'tag', 'func', 'is_active', 'next_time',
+                             'sec', 'min', 'hou', 'dom', 'mon', 'dow', 'yea']
 
     def render_next_time(self, value, record):
         return utils.get_next_time(record)

@@ -19,8 +19,13 @@ class Command(BaseCommand):
             self.logger.debug("%s will run in %ssec", job.name, next_)
             return
         self.logger.info("started %s", job.name)
-        result = job.run()
-        self.logger.info("finished %s", job.name)
+        try:
+            result = job.run()
+        except Exception as err:
+            self.logger.exception("error with %s", job.name)
+            raise
+        finally:
+            self.logger.info("finished %s", job.name)
         return result
 
     def main(self, executor):

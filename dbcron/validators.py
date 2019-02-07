@@ -1,5 +1,6 @@
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
+from django.utils.deconstruct import deconstructible
 
 MONTH_MAP = {
     'JAN': 1,
@@ -26,12 +27,16 @@ DAYS = {
 }
 
 
+@deconstructible
 class BaseCrontabValidator:
     code = 'invalid'
     int_message = _("Enter a number between %d and %d.")
     range_message = _("Please enter valid range from %d and %s.")
     freq_message = _("Enter a valid positive number.")
     special_strings = []
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
 
     def validate_int(self, value, index):
         try:
