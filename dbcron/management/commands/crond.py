@@ -7,6 +7,7 @@ from django.utils.timezone import now
 
 from dbcron import models
 from dbcron import settings
+from dbcron import signals
 
 
 class Command(BaseCommand):
@@ -25,11 +26,15 @@ class Command(BaseCommand):
             self.logger.debug("%s will run in %ssec", job.name, next_)
             return
         self.logger.info("started %s", job.name)
+        signals.job_started.send(sender=self.__class__, job=job)
         try:
             result = job.run()
         except Exception as err:
             self.logger.exception("error with %s", job.name)
+            signals.job_failed.send(sender=self.__class__, job=job)
             raise
+        else:
+            signals.job_done.send(sender=self.__class__, job=job)
         finally:
             self.logger.info("finished %s", job.name)
         return result
