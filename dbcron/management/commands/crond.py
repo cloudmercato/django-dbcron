@@ -13,6 +13,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         pass
 
+    @property
+    def logger(self):
+        if not hasattr(self, '_logger'):
+            self._logger = logging.getLogger('dbcron')
+        return self._logger
+
     def run_job(self, job):
         next_ = int(job.entry.next())
         if next_ != 0:
@@ -37,7 +43,6 @@ class Command(BaseCommand):
             time.sleep(1)
 
     def handle(self, *args, **options):
-        self.logger = logging.getLogger('dbcron')
         executor = futures.ThreadPoolExecutor(max_workers=settings.MAX_WORKERS)
         try:
             self.main(executor)
