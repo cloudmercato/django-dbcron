@@ -1,5 +1,6 @@
 from unittest.mock import patch
 from datetime import datetime
+from io import StringIO
 
 from django.test import TestCase
 from django.core.management import call_command
@@ -33,21 +34,52 @@ class CrondRunJobTest(TestCase):
 
 
 class CrondCommandTest(TestCase):
-    @patch('dbcron.management.commands.crond.Command.stop', side_effect=(False, True))
-    def test_run(self, mock):
-        call_command('crond')
-        self.assertEqual(mock.call_count, 2)
+    def setUp(self):
+        self.stdout = StringIO()
 
+    @patch('dbcron.management.commands.crond.time.sleep')
+    @patch('dbcron.management.commands.crond.Command.stop', side_effect=(False, True))
+    def test_run(self, mock, mock_sleep):
+        call_command('crond', stdout=self.stdout)
+        self.assertEqual(mock.call_count, 2)
+        self.stdout.seek(0)
+        self.assertIn('Started', self.stdout.read())
+
+    @patch('dbcron.management.commands.crond.time.sleep')
     @patch('dbcron.management.commands.crond.Command.run_job', return_value=True)
     @patch('dbcron.management.commands.crond.Command.stop', return_value=True)
-    def test_filter_tags(self, mock_stop, mock_run_job):
-        JobFactory.create(tag='foo')
-        call_command('crond', '--tags', 'foo')
+    def test_filter_tag(self, mock_stop, mock_run_job, mock_sleep):
+        JobFactory.create(tag='foo', is_active=True)
+        call_command('crond', '--tags', 'foo', stdout=self.stdout)
         self.assertEqual(mock_run_job.call_count, 1)
 
+    @patch('dbcron.management.commands.crond.time.sleep')
     @patch('dbcron.management.commands.crond.Command.run_job', return_value=True)
     @patch('dbcron.management.commands.crond.Command.stop', return_value=True)
-    def test_filter_tags(self, mock_stop, mock_run_job):
-        JobFactory.create(tag='foo')
-        call_command('crond', '--tags', 'bar')
+    def test_filter_tag_has_no_job(self, mock_stop, mock_run_job, mock_sleep):
+        JobFactory.create(tag='foo', is_active=True)
+        call_command('crond', '--tags', 'bar', stdout=self.stdout)
         self.assertEqual(mock_run_job.call_count, 0)
+
+    @patch('dbcron.management.commands.crond.time.sleep')
+    @patch('dbcron.management.commands.crond.Command.run_job', return_value=True)
+    @patch('dbcron.management.commands.crond.Command.stop', return_value=True)
+    def test_filter_tags(self, mock_stop, mock_run_job, mock_sleep):
+        JobFactory.create(tag='foo', is_active=True)
+        JobFactory.create(tag='bar', is_active=True)
+        JobFactory.create(tag='ham', is_active=True)
+        call_command('crond', '--tags', 'foo', 'bar', stdout=self.stdout)
+        self.assertEqual(mock_run_job.call_count, 2)
+
+    @patch('dbcron.management.commands.crond.time.sleep')
+    @patch('dbcron.management.commands.crond.Command.stop', return_value=True)
+    def test_quiet(self, mock_stop, mock_sleep):
+        call_command('crond', '--quiet', stdout=self.stdout)
+        self.stdout.seek(0)
+        self.assertFalse(self.stdout.read())
+
+    @patch('dbcron.management.commands.crond.Command.main', side_effect=KeyboardInterrupt)
+    def test_keyboard_interrupt(self, mock_main):
+        call_command('crond', stdout=self.stdout)
+        self.stdout.seek(0)
+        self.assertIn('Stopped', self.stdout.read())
