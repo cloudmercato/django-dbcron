@@ -1,7 +1,9 @@
 from unittest.mock import patch
 from datetime import datetime
-from concurrent import futures
+
 from django.test import TestCase
+from django.core.management import call_command
+
 from dbcron.management.commands.crond import Command
 from dbcron.tests.factories import JobFactory
 
@@ -28,3 +30,24 @@ class CrondRunJobTest(TestCase):
         job = JobFactory.create()
         with self.assertRaises(Exception):
             self.command.run_job(job)
+
+
+class CrondCommandTest(TestCase):
+    @patch('dbcron.management.commands.crond.Command.stop', side_effect=(False, True))
+    def test_run(self, mock):
+        call_command('crond')
+        self.assertEqual(mock.call_count, 2)
+
+    @patch('dbcron.management.commands.crond.Command.run_job', return_value=True)
+    @patch('dbcron.management.commands.crond.Command.stop', return_value=True)
+    def test_filter_tags(self, mock_stop, mock_run_job):
+        JobFactory.create(tag='foo')
+        call_command('crond', '--tags', 'foo')
+        self.assertEqual(mock_run_job.call_count, 1)
+
+    @patch('dbcron.management.commands.crond.Command.run_job', return_value=True)
+    @patch('dbcron.management.commands.crond.Command.stop', return_value=True)
+    def test_filter_tags(self, mock_stop, mock_run_job):
+        JobFactory.create(tag='foo')
+        call_command('crond', '--tags', 'bar')
+        self.assertEqual(mock_run_job.call_count, 0)

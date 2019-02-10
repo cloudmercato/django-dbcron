@@ -3,7 +3,6 @@ import logging
 from concurrent import futures
 
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.timezone import now
 
 from dbcron import models
 from dbcron import settings
@@ -12,7 +11,10 @@ from dbcron import signals
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        pass
+        parser.add_argument(
+            '-t', '--tags', nargs='*',
+            help='Filter jobs by tag(s)'
+        )
 
     @property
     def logger(self):
@@ -20,7 +22,12 @@ class Command(BaseCommand):
             self._logger = logging.getLogger('dbcron')
         return self._logger
 
+    def stop(self):
+        """Helper for tests"""
+        return False
+
     def run_job(self, job):
+        """Decides to run a job, launches it and handles errors."""
         next_ = int(job.entry.next())
         if next_ != 0:
             self.logger.debug("%s will run in %ssec", job.name, next_)
@@ -39,18 +46,23 @@ class Command(BaseCommand):
             self.logger.info("finished %s", job.name)
         return result
 
-    def main(self, executor):
+    def main(self, executor, tags, **kwargs):
+        """Infinite loop acting as cron daemon."""
         jobs = models.Job.objects.filter(is_active=True)
+        if tags:
+            jobs = jobs.filter(tag__in=tags)
         self.stdout.write(self.style.SUCCESS('Started'))
         while True:
             self.logger.debug("new loop")
             executor.map(self.run_job, jobs.all())
+            if self.stop():
+                break
             time.sleep(1)
 
     def handle(self, *args, **options):
         executor = futures.ThreadPoolExecutor(max_workers=settings.MAX_WORKERS)
         try:
-            self.main(executor)
+            self.main(executor, **options)
         except KeyboardInterrupt as err:
             executor.shutdown()
             self.stdout.write(self.style.WARNING('Stopped'))
