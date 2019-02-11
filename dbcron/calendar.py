@@ -45,21 +45,29 @@ class JobCalendar(HTMLCalendar):
 
     def _format_jobs(self, v, first_day, dates):
         a = v.append
-        day = first_day
-        for i in range(7):
-            a('<td>')
-            a('<ul>')
-            for job, jobtime in dates[day]:
-                a('<li>')
-                if hasattr(job, 'get_absolute_url'):
-                    a('%s - <a href="%s">%s</a>' % (jobtime.strftime("%H:%M"), job.get_absolute_url(), job.name))
-                else:
-                    a('%s - %s' % (jobtime.strftime("%H:%M"), job.name))
-                a('</li>')
-            a('</ul>')
-            a('</td>')
+        for hour in range(0, 23):
+            day = first_day
+            a('<tr>')
+            a('<th>')
+            a('%d' % hour)
+            a('</th>')
+            for i in range(7):
+                a('<td>')
+                a('<ul>')
+                for job, jobtime in dates[day][hour]:
+                    a('<li>')
+                    if hasattr(job, 'get_absolute_url'):
+                        a('%s - <a href="%s">%s</a>' % (jobtime.strftime("%M"),
+                                                        job.get_absolute_url(),
+                                                        job.name))
+                    else:
+                        a('%s - %s' % (jobtime.strftime("%H:%M"), job.name))
+                    a('</li>')
+                a('</ul>')
+                a('</td>')
+                day += timedelta(days=1)
+            a('</tr>')
             a('\n')
-            day += timedelta(days=1)
 
     def formatweekofmonth(self, theyear, theweek, withyear=True):
         v = []
@@ -67,8 +75,6 @@ class JobCalendar(HTMLCalendar):
         a('<table class="%s">' % (
             self.get_table_class()
         ))
-        # a('\n')
-        # a(self.formatweekheader())
         a('\n')
         a('<tr>')
         a('<th></th>')
@@ -76,13 +82,11 @@ class JobCalendar(HTMLCalendar):
             a('<th>%d</th>' % i)
         a('</tr>')
         day = self.get_firstdateofweek(theyear, theweek)
-        dates = self.jobs.get_next_planned(
+        dates = self.jobs.get_next_planned_by_hour(
             from_=datetime(theyear, day.month, day.day-1, 23, 59),
             until=day+timedelta(days=7))
         a('<tr>')
-        a('<td>')
         self._format_jobs(v, day, dates)
-        a('</td>')
         a('<tr>')
         a('</table>')
         a('\n')
