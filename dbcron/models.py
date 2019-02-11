@@ -1,9 +1,12 @@
 import importlib
 import json
+from datetime import timedelta
 from crontab import CronTab
 from django.db import models
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from dbcron import validators
+from dbcron import querysets
 
 
 class Job(models.Model):
@@ -46,6 +49,8 @@ class Job(models.Model):
         validators=[validators.YearsValidator()]
     )
 
+    objects = querysets.JobQuerySet.as_manager()
+
     class Meta:
         verbose_name = _("job")
         verbose_name_plural = _("jobs")
@@ -81,3 +86,12 @@ class Job(models.Model):
         next_ = self.entry.next()
         if next_ is not None:
             return int(self.entry.next())
+
+    def get_next_planned(self, until, from_):
+        from_ = from_ or now()
+        while until > from_.date():
+            delta = self.entry.next(from_)
+            from_ += timedelta(seconds=delta)
+            if delta < 1:
+                continue
+            yield from_
