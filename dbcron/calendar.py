@@ -1,10 +1,22 @@
 from datetime import date, timedelta, datetime
 from calendar import HTMLCalendar
+from django.utils.translation import ugettext_lazy as _
 from dbcron import models
+
+DAYS = {
+    0: _("Sunday"),
+    1: _("Monday"),
+    2: _("Tuesday"),
+    3: _("Wednesday"),
+    4: _("Thursday"),
+    5: _("Friday"),
+    6: _("Saturday"),
+}
 
 
 class JobCalendar(HTMLCalendar):
-    table_class = "table"
+    table_class = ""
+    ul_class = ""
 
     def __init__(self, jobs, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -43,17 +55,27 @@ class JobCalendar(HTMLCalendar):
         first_day = week_date - timedelta(days=week_date.isocalendar()[1])
         return first_day
 
+    def _format_weekday(self, day):
+        return str(DAYS[day])
+
+    def _format_hour(self, hour):
+        if hour == 0:
+            return str(_("Midnight"))
+        elif hour == 12:
+            return str(_("Noon"))
+        return '%d' % hour
+
     def _format_jobs(self, v, first_day, dates):
         a = v.append
-        for hour in range(0, 23):
+        for hour in range(0, 24):
             day = first_day
             a('<tr>')
             a('<th>')
-            a('%d' % hour)
+            a(self._format_hour(hour))
             a('</th>')
             for i in range(7):
                 a('<td>')
-                a('<ul>')
+                a('<ul class="%s">' % self.ul_class)
                 for job, jobtime in dates[day][hour]:
                     a('<li>')
                     if hasattr(job, 'get_absolute_url'):
@@ -77,9 +99,9 @@ class JobCalendar(HTMLCalendar):
         ))
         a('\n')
         a('<tr>')
-        a('<th></th>')
+        a('<th>%s</th>' % _("UTC"))
         for i in range(7):
-            a('<th>%d</th>' % i)
+            a('<th>%s</th>' % self._format_weekday(i))
         a('</tr>')
         day = self.get_firstdateofweek(theyear, theweek)
         dates = self.jobs.get_next_planned_by_hour(
