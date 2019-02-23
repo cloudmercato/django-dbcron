@@ -1,22 +1,29 @@
 from datetime import date, timedelta, datetime
 from calendar import HTMLCalendar
 from django.utils.translation import ugettext_lazy as _
+from dateutil.relativedelta import relativedelta
 from dbcron import models
 
 DAYS = {
-    0: _("Sunday"),
-    1: _("Monday"),
-    2: _("Tuesday"),
-    3: _("Wednesday"),
-    4: _("Thursday"),
-    5: _("Friday"),
-    6: _("Saturday"),
+    6: _("Sunday"),
+    0: _("Monday"),
+    1: _("Tuesday"),
+    2: _("Wednesday"),
+    3: _("Thursday"),
+    4: _("Friday"),
+    5: _("Saturday"),
 }
 
 
 class JobCalendar(HTMLCalendar):
     table_class = ""
+    month_table_class = ""
+    day_outside_class = ""
+    month_today_class = ""
+    day_of_month_class = ""
     ul_class = ""
+    active_job_class = ""
+    disactive_job_class = ""
 
     def __init__(self, jobs, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,19 +32,53 @@ class JobCalendar(HTMLCalendar):
     def get_table_class(self):
         return self.table_class
 
+    def get_job_class(self, job):
+        return self.active_job_class if job.is_active else self.disactive_job_class
+
+    def formatweekday(self, day):
+        return '<th class="%s">%s</th>' % (self.cssclasses[day], self._format_weekday(day))
+
     def formatmonth(self, theyear, themonth, withyear=True):
         v = []
+        month_weeks = self.monthdays2calendar(theyear, themonth)
+        days_before = len([i for i in month_weeks[0] if i[0] == 0])
+        dates = self.jobs.get_next_planned_by_hour(
+            from_=datetime(theyear, themonth, 1) - timedelta(days=days_before),
+            until=date(theyear, themonth, 1) + relativedelta(months=1) + timedelta(days=7)
+        )
         a = v.append
         a('<table class="%s">' % (
-            self.get_table_class()
+            self.month_table_class,
         ))
         a('\n')
         a(self.formatmonthname(theyear, themonth, withyear=withyear))
         a('\n')
         a(self.formatweekheader())
         a('\n')
-        for week in self.monthdays2calendar(theyear, themonth):
-            a(self.formatweek(week))
+        for week_num, week in enumerate(month_weeks):
+            a('<tr>')
+            for day_id, weekday in week:
+                day_klasses = []
+                if day_id == 0:  # Out of month
+                    if week_num == 0:
+                        delta = len([i for i in week if i[1] >= weekday and not i[0]])
+                        day = date(theyear, themonth, 1) - timedelta(days=delta)
+                    elif week_num == len(month_weeks) - 1:
+                        delta = len([i for i in week if i[1] <= weekday and not i[0]])
+                        day = self.get_lastdateofmonth(theyear, themonth) + timedelta(days=delta)
+                    day_klasses.append(self.day_outside_class)
+                else:
+                    day = date(theyear, themonth, day_id)
+                if day == date.today():
+                    day_klasses.append(self.month_today_class)
+                a('<td class="%s">' % ' '.join(day_klasses))
+                a('<div class="%s">%s</div>' % (
+                    self.day_of_month_class,
+                    day.day
+                ))
+                self._format_month_jobs(v, day, dates)
+                a('</td>')
+            a('</tr>')
             a('\n')
         a('</table>')
         a('\n')
@@ -55,6 +96,11 @@ class JobCalendar(HTMLCalendar):
         first_day = week_date - timedelta(days=week_date.isocalendar()[1])
         return first_day
 
+    def get_lastdateofmonth(self, theyear, themonth):
+        month_after = date(theyear, themonth, 1) + relativedelta(months=1)
+        current_month = month_after - timedelta(days=1)
+        return current_month
+
     def _format_weekday(self, day):
         return str(DAYS[day])
 
@@ -64,6 +110,23 @@ class JobCalendar(HTMLCalendar):
         elif hour == 12:
             return str(_("Noon"))
         return '%d' % hour
+
+    def _format_month_jobs(self, v, day, dates):
+        a = v.append
+        a('<ul class="%s">' % self.ul_class)
+        for hour in dates[day]:
+            for job, jobtime in dates[day][hour]:
+                a('<li class="%s">' % self.get_job_class(job))
+                if hasattr(job, 'get_absolute_url'):
+                    a('%s - <a href="%s">%s</a>' % (jobtime.strftime("%H:%M"),
+                                                    job.get_absolute_url(),
+                                                    job.name))
+                else:
+                    a('%s - %s' % (jobtime.strftime("%H:%M"), job.name))
+                a('</li>')
+            day += timedelta(days=1)
+            a('\n')
+        a('</ul>')
 
     def _format_jobs(self, v, first_day, dates):
         a = v.append
@@ -77,7 +140,7 @@ class JobCalendar(HTMLCalendar):
                 a('<td>')
                 a('<ul class="%s">' % self.ul_class)
                 for job, jobtime in dates[day][hour]:
-                    a('<li>')
+                    a('<li class="%s">' % self.get_job_class(job))
                     if hasattr(job, 'get_absolute_url'):
                         a('%s - <a href="%s">%s</a>' % (jobtime.strftime("%M"),
                                                         job.get_absolute_url(),
@@ -105,7 +168,7 @@ class JobCalendar(HTMLCalendar):
         a('</tr>')
         day = self.get_firstdateofweek(theyear, theweek)
         dates = self.jobs.get_next_planned_by_hour(
-            from_=datetime(theyear, day.month, day.day-1, 23, 59),
+            from_=datetime(theyear, day.month, day.day) - timedelta(days=1),
             until=day+timedelta(days=7))
         a('<tr>')
         self._format_jobs(v, day, dates)
