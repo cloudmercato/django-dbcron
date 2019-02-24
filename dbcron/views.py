@@ -46,16 +46,16 @@ class JobMonthCalendarMixin(JobCalendarMixin):
     def get_context_data(self, *args, **kwargs):
         data = super().get_context_data(*args, **kwargs)
         calendar_date = date(int(self.kwargs['year']), int(self.kwargs['month']), 1)
-        calendar = data['calendar']
-        month_calendar = calendar.formatmonth(calendar_date.year, calendar_date.month)
+        html_calendar = data['calendar']
+        month_calendar = html_calendar.formatmonth(calendar_date.year, calendar_date.month)
         today = date.today()
         today_url = reverse('job-calendar-month', kwargs={
             'year': today.year, 'month': today.month
         })
-        if calendar_date.year == today.year and calendar_date.month == today.month:
-            is_current_calendar = True
-        else:
-            is_current_calendar = False
+        is_current_calendar = bool(
+            calendar_date.year == today.year and
+            calendar_date.month == today.month
+        )
         next_date = calendar_date + relativedelta(months=1)
         next_url = reverse('job-calendar-month', kwargs={
             'year': next_date.year, 'month': next_date.month
@@ -96,9 +96,9 @@ class JobWeekCalendarMixin(JobCalendarMixin):
         today_week = today.isocalendar()[1]
         week = int(self.kwargs.get('week', today_week))
         year = int(self.kwargs.get('year', today.year))
-        calendar = data['calendar']
-        calendar_date = date(year, 1, 1) + relativedelta(weeks=week)
-        week_calendar = calendar.formatweekofmonth(year, week)
+        html_calendar = data['calendar']
+        calendar_date = date(year, 1, 1) + relativedelta(weeks=week-1)
+        week_calendar = html_calendar.formatweekofmonth(year, week)
         if calendar_date.year == today.year and today_week == week:
             is_current_calendar = True
         else:

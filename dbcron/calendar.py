@@ -92,8 +92,8 @@ class JobCalendar(HTMLCalendar):
 
     def get_firstdateofweek(self, theyear, theweek):
         year_date = date(theyear, 1, 1)
-        week_date = year_date + timedelta(days=theweek*7)
-        first_day = week_date - timedelta(days=week_date.isocalendar()[1])
+        week_date = year_date + relativedelta(weeks=theweek-1)
+        first_day = week_date - timedelta(days=week_date.isocalendar()[2]-1)
         return first_day
 
     def get_lastdateofmonth(self, theyear, themonth):
@@ -154,19 +154,28 @@ class JobCalendar(HTMLCalendar):
             a('</tr>')
             a('\n')
 
+    def _format_weekdays_header(self, v, start_day):
+        a = v.append
+        day = start_day
+        for i in range(7):
+            a('<th>%s %s</th>' % (
+                self._format_weekday(i),
+                day.day,
+            ))
+            day += timedelta(days=1)
+
     def formatweekofmonth(self, theyear, theweek, withyear=True):
         v = []
         a = v.append
+        day = self.get_firstdateofweek(theyear, theweek)
         a('<table class="%s">' % (
             self.get_table_class()
         ))
         a('\n')
         a('<tr>')
         a('<th>%s</th>' % _("UTC"))
-        for i in range(7):
-            a('<th>%s</th>' % self._format_weekday(i))
+        self._format_weekdays_header(v, day)
         a('</tr>')
-        day = self.get_firstdateofweek(theyear, theweek)
         dates = self.jobs.get_next_planned_by_hour(
             from_=datetime(theyear, day.month, day.day) - timedelta(days=1),
             until=day+timedelta(days=7))
