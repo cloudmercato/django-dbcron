@@ -74,10 +74,16 @@ class Job(models.Model):
         func = getattr(module, func_name)
         return func
 
+    def get_arguments(self):
+        return json.loads(self.args)
+
+    def get_options(self):
+        return json.loads(self.opts)
+
     def run(self):
         func = self._get_func()
-        args = json.loads(self.args)
-        opts = json.loads(self.opts)
+        args = self.get_arguments()
+        opts = self.get_options()
         result = func(*args, **opts)
         return result
 

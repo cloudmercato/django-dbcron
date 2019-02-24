@@ -5,13 +5,14 @@ from io import StringIO
 from django.test import TestCase
 from django.core.management import call_command
 
-from dbcron.management.commands.crond import Command
+from dbcron.management.commands.crond import Command as CrondCommand
+from dbcron.management.commands.run_jobs import Command as RunJobsCommand
 from dbcron.tests.factories import JobFactory
 
 
 class CrondRunJobTest(TestCase):
     def setUp(self):
-        self.command = Command()
+        self.command = CrondCommand()
 
     @patch('crontab.CronTab.next', return_value=42)
     def test_not_now(self, mock):
@@ -83,3 +84,20 @@ class CrondCommandTest(TestCase):
         call_command('crond', stdout=self.stdout)
         self.stdout.seek(0)
         self.assertIn('Stopped', self.stdout.read())
+
+
+class RunJobsCommandTest(TestCase):
+    def setUp(self):
+        self.stdout = StringIO()
+
+    def test_run_one(self):
+        job = JobFactory.create()
+        call_command('run_jobs', job.id, stdout=self.stdout)
+        self.stdout.seek(0)
+        self.assertIn('Started', self.stdout.read())
+
+    def test_run_two(self):
+        job1, job2 = JobFactory.create_batch(2)
+        call_command('run_jobs', job1.id, job2.id, stdout=self.stdout)
+        self.stdout.seek(0)
+        self.assertIn('Started', self.stdout.read())

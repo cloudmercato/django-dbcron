@@ -1,16 +1,14 @@
 import time
-import logging
 from io import StringIO
 from concurrent import futures
 
-from django.core.management.base import BaseCommand, CommandError
-
+from dbcron.management.commands import _base
 from dbcron import models
 from dbcron import settings
 from dbcron import signals
 
 
-class Command(BaseCommand):
+class Command(_base.Command):
     def add_arguments(self, parser):
         parser.add_argument(
             '-t', '--tags', nargs='*',
@@ -20,12 +18,6 @@ class Command(BaseCommand):
             '-q', '--quiet', action='store_true',
             help='Disable any output (except logs)',
         )
-
-    @property
-    def logger(self):
-        if not hasattr(self, '_logger'):
-            self._logger = logging.getLogger('dbcron')
-        return self._logger
 
     def stop(self):
         """Helper for tests"""
