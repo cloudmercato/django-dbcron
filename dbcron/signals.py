@@ -1,5 +1,5 @@
-import django.dispatch
+from django.dispatch import Signal
 
-job_started = django.dispatch.Signal(providing_args=['job'])
-job_done = django.dispatch.Signal(providing_args=['job'])
-job_failed = django.dispatch.Signal(providing_args=['job'])
+job_started = Signal(providing_args=['job'])
+job_done = Signal(providing_args=['job'])
+job_failed = Signal(providing_args=['job'])

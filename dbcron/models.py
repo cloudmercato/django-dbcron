@@ -1,12 +1,16 @@
 import importlib
 import json
 from datetime import timedelta
+
 from crontab import CronTab
+
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
+
 from dbcron import validators
 from dbcron import querysets
+from dbcron import signals
 
 
 class Job(models.Model):
@@ -80,11 +84,19 @@ class Job(models.Model):
     def get_options(self):
         return json.loads(self.opts)
 
-    def run(self):
+    def run(self, fail_silently=False):
         func = self._get_func()
         args = self.get_arguments()
         opts = self.get_options()
-        result = func(*args, **opts)
+        signals.job_started.send(sender=self.__class__, job=self)
+        try:
+            result = func(*args, **opts)
+        except Exception as err:
+            signals.job_failed.send(sender=self.__class__, job=self)
+            if fail_silently:
+                return
+            raise
+        signals.job_done.send(sender=self.__class__, job=self)
         return result
 
     @property

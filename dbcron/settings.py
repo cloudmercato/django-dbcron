@@ -8,3 +8,5 @@ def get_setting(name, *default):
 
 
 MAX_WORKERS = get_setting('MAX_WORKERS', 8)
+
+JOB_GROUP = get_setting('JOB_GROUP', 'dbcron')
