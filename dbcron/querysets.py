@@ -9,7 +9,7 @@ class JobQuerySet(models.QuerySet):
             for next_date in job.get_next_planned(until, from_):
                 dates[next_date.date()].append((job, next_date))
         for date in dates:
-            dates[date] = sorted(dates[date], key=lambda x: x[1])
+            dates[date] = sorted(dates[date], key=lambda x: x[1].hour)
         return dates
 
     def get_next_planned_by_hour(self, until, from_=None):

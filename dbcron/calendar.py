@@ -111,24 +111,38 @@ class JobCalendar(HTMLCalendar):
             return str(_("Noon"))
         return '%d' % hour
 
+    def _format_month_day_job(self, v, job, jobtime):
+        a = v.append
+        a('<li class="%s">' % self.get_job_class(job))
+        if hasattr(job, 'get_absolute_url'):
+            a('%s - <a href="%s">%s</a>' % (jobtime.strftime("%H:%M"),
+                                            job.get_absolute_url(),
+                                            job.name))
+        else:
+            a('%s - %s' % (jobtime.strftime("%H:%M"), job.name))
+        a('</li>')
+
     def _format_month_jobs(self, v, day, dates):
         a = v.append
         a('<ul class="%s">' % self.ul_class)
-        for hour in dates[day]:
-            for job, jobtime in dates[day][hour]:
-                a('<li class="%s">' % self.get_job_class(job))
-                if hasattr(job, 'get_absolute_url'):
-                    a('%s - <a href="%s">%s</a>' % (jobtime.strftime("%H:%M"),
-                                                    job.get_absolute_url(),
-                                                    job.name))
-                else:
-                    a('%s - %s' % (jobtime.strftime("%H:%M"), job.name))
-                a('</li>')
-            day += timedelta(days=1)
+        offset = date(day.year, day.month, day.day)
+        for hour in dates[offset]:
+            for job, jobtime in dates[offset][hour]:
+                self._format_month_day_job(v, job, jobtime)
+            offset += timedelta(days=1)
             a('\n')
         a('</ul>')
 
-    def _format_jobs(self, v, first_day, dates):
+    def _format_day_job(self, v, job, jobtime):
+        a = v.append
+        if hasattr(job, 'get_absolute_url'):
+            a('%s - <a href="%s">%s</a>' % (jobtime.strftime("%M"),
+                                            job.get_absolute_url(),
+                                            job.name))
+        else:
+            a('%s - %s' % (jobtime.strftime("%H:%M"), job.name))
+
+    def _format_day_jobs(self, v, first_day, dates):
         a = v.append
         for hour in range(0, 24):
             day = first_day
@@ -141,12 +155,7 @@ class JobCalendar(HTMLCalendar):
                 a('<ul class="%s">' % self.ul_class)
                 for job, jobtime in dates[day][hour]:
                     a('<li class="%s">' % self.get_job_class(job))
-                    if hasattr(job, 'get_absolute_url'):
-                        a('%s - <a href="%s">%s</a>' % (jobtime.strftime("%M"),
-                                                        job.get_absolute_url(),
-                                                        job.name))
-                    else:
-                        a('%s - %s' % (jobtime.strftime("%H:%M"), job.name))
+                    self._format_day_job(v, job, jobtime)
                     a('</li>')
                 a('</ul>')
                 a('</td>')
@@ -180,7 +189,7 @@ class JobCalendar(HTMLCalendar):
             from_=datetime(theyear, day.month, day.day) - timedelta(days=1),
             until=day+timedelta(days=7))
         a('<tr>')
-        self._format_jobs(v, day, dates)
+        self._format_day_jobs(v, day, dates)
         a('<tr>')
         a('</table>')
         a('\n')
