@@ -92,7 +92,7 @@ class Job(models.Model):
         try:
             result = func(*args, **opts)
         except Exception as err:
-            signals.job_failed.send(sender=self.__class__, job=self)
+            signals.job_failed.send(sender=self.__class__, job=self, error=err)
             if fail_silently:
                 return
             raise

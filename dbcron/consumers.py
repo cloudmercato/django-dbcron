@@ -1,3 +1,5 @@
+import traceback
+
 from django.dispatch import receiver
 
 from asgiref.sync import async_to_sync, sync_to_async
@@ -45,11 +47,12 @@ class JobAsyncConsumer(JobConsumerMixin, websocket.AsyncJsonWebsocketConsumer):
         await self.send_json(status)
 
 
-def _emit_job_status(job, status):
+def _emit_job_status(job, status, message=None):
     data = {
         'id': job.id,
         'type': 'emit.job.status',
         'status': status,
+        'message': message,
     }
     if hasattr(job, 'get_absolute_url'):
         data['url'] = job.get_absolute_url()
@@ -68,6 +71,6 @@ def send_job_done(sender, job, **kwargs):
 
 
 @receiver(signals.job_failed, dispatch_uid="ws_job_failed")
-def send_job_failed(sender, job, **kwargs):
-    _emit_job_status(job, 'failed')
-
+def send_job_failed(sender, job, error, **kwargs):
+    message = traceback.format_exc().splitlines()[-1]
+    _emit_job_status(job, 'failed', message)
