@@ -55,7 +55,7 @@ def _emit_job_status(job, status, message=None):
         'message': message,
     }
     if hasattr(job, 'get_absolute_url'):
-        data['url'] = job.get_absolute_url()
+        data['url'] = str(job.get_absolute_url())
     channel_layer = layers.get_channel_layer()
     async_to_sync(channel_layer.group_send)(settings.JOB_GROUP, data)
 
