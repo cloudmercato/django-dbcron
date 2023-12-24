@@ -1,5 +1,4 @@
 from django.core import validators
-from django.utils.translation import ugettext_lazy as _
 from django.utils.deconstruct import deconstructible
 
 MONTH_MAP = {
@@ -30,9 +29,9 @@ DAYS = {
 @deconstructible
 class BaseCrontabValidator:
     code = 'invalid'
-    int_message = _("Enter a number between %d and %d.")
-    range_message = _("Please enter valid range from %d and %s.")
-    freq_message = _("Enter a valid positive number.")
+    int_message = "Enter a number between %d and %d."
+    range_message = "Please enter valid range from %d and %s."
+    freq_message = "Enter a valid positive number."
     special_strings = []
 
     def __eq__(self, other):
@@ -57,7 +56,7 @@ class BaseCrontabValidator:
             min_, max_ = value.split('-')
         except ValueError:
             raise validators.ValidationError(
-                message=_("Bad range format"),
+                message="Bad range format",
                 code=self.code
             )
         self.validate_int(min_, index)
@@ -81,7 +80,7 @@ class BaseCrontabValidator:
                                              code=self.code)
         if star != '*':
             raise validators.ValidationError(
-                message=_("The first character of frequency must be '*'."),
+                message="The first character of frequency must be '*'.",
                 code=self.code
             )
 
@@ -108,7 +107,7 @@ class BaseCrontabValidator:
             elif value in ['*', '?']:
                 continue
             raise validators.ValidationError(
-                message=_("Enter a correct value."),
+                message="Enter a correct value.",
                 code=self.code
             )
 

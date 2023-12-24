@@ -6,7 +6,6 @@ from crontab import CronTab
 
 from django.db import models
 from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
 
 from dbcron import validators
 from dbcron import querysets
@@ -14,50 +13,50 @@ from dbcron import signals
 
 
 class Job(models.Model):
-    name = models.CharField(max_length=200, verbose_name=_("name"))
-    tag = models.CharField(max_length=150, verbose_name=_("tag"), blank=True, null=True)
-    description = models.TextField(max_length=2000, verbose_name=_("description"), blank=True)
-    func = models.CharField(max_length=250, verbose_name=_("function"))
+    name = models.CharField(max_length=200, verbose_name="name")
+    tag = models.CharField(max_length=150, verbose_name="tag", blank=True, null=True)
+    description = models.TextField(max_length=2000, verbose_name="description", blank=True)
+    func = models.CharField(max_length=250, verbose_name="function")
 
-    args = models.TextField(max_length=2000, default='[]', verbose_name=_("arguments"))
-    opts = models.TextField(max_length=2000, default='{}', verbose_name=_("options"))
+    args = models.TextField(max_length=2000, default='[]', verbose_name="arguments")
+    opts = models.TextField(max_length=2000, default='{}', verbose_name="options")
 
-    is_active = models.BooleanField(default=False, verbose_name=_("is active"))
+    is_active = models.BooleanField(default=False, verbose_name="is active")
 
     sec = models.CharField(
-        max_length=50, default='0', verbose_name=_("second(s)"),
+        max_length=50, default='0', verbose_name="second(s)",
         validators=[validators.SecondsValidator()]
     )
     min = models.CharField(
-        max_length=50, verbose_name=_("minute(s)"),
+        max_length=50, verbose_name="minute(s)",
         validators=[validators.MinutesValidator()]
     )
     hou = models.CharField(
-        max_length=50, verbose_name=_("hour(s)"),
+        max_length=50, verbose_name="hour(s)",
         validators=[validators.HoursValidator()]
     )
     dom = models.CharField(
-        max_length=50, verbose_name=_("day(s) of month"),
+        max_length=50, verbose_name="day(s) of month",
         validators=[validators.DaysOfMonthValidator()]
     )
     mon = models.CharField(
-        max_length=50, verbose_name=_("month"),
+        max_length=50, verbose_name="month",
         validators=[validators.MonthValidator()]
     )
     dow = models.CharField(
-        max_length=50, verbose_name=_("day(s) of week"),
+        max_length=50, verbose_name="day(s) of week",
         validators=[validators.DaysOfWeekValidator()]
     )
     yea = models.CharField(
-        max_length=50, default='*', verbose_name=_("year(s)"),
+        max_length=50, default='*', verbose_name="year(s)",
         validators=[validators.YearsValidator()]
     )
 
     objects = querysets.JobQuerySet.as_manager()
 
     class Meta:
-        verbose_name = _("job")
-        verbose_name_plural = _("jobs")
+        verbose_name = "job"
+        verbose_name_plural = "jobs"
 
     @property
     def raw_entry(self):

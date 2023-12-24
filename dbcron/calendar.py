@@ -1,17 +1,16 @@
 from datetime import date, timedelta, datetime
 from calendar import HTMLCalendar
-from django.utils.translation import ugettext_lazy as _
 from dateutil.relativedelta import relativedelta
 from dbcron import models
 
 DAYS = {
-    6: _("Sunday"),
-    0: _("Monday"),
-    1: _("Tuesday"),
-    2: _("Wednesday"),
-    3: _("Thursday"),
-    4: _("Friday"),
-    5: _("Saturday"),
+    6: "Sunday",
+    0: "Monday",
+    1: "Tuesday",
+    2: "Wednesday",
+    3: "Thursday",
+    4: "Friday",
+    5: "Saturday",
 }
 
 
@@ -102,13 +101,13 @@ class JobCalendar(HTMLCalendar):
         return current_month
 
     def _format_weekday(self, day):
-        return str(DAYS[day])
+        return DAYS[day]
 
     def _format_hour(self, hour):
         if hour == 0:
-            return str(_("Midnight"))
+            return "Midnight"
         elif hour == 12:
-            return str(_("Noon"))
+            return "Noon"
         return '%d' % hour
 
     def _format_month_day_job(self, v, job, jobtime):
@@ -182,7 +181,7 @@ class JobCalendar(HTMLCalendar):
         ))
         a('\n')
         a('<tr>')
-        a('<th>%s</th>' % _("UTC"))
+        a('<th>%s</th>' % "UTC")
         self._format_weekdays_header(v, day)
         a('</tr>')
         dates = self.jobs.get_next_planned_by_hour(

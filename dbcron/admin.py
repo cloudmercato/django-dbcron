@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.utils.translation import ugettext_lazy as _
 from dbcron import models
 from dbcron import utils
 
@@ -12,14 +11,14 @@ class JobAdmin(admin.ModelAdmin):
     actions = ('make_disable', 'make_enable')
     ordering = ['name']
     fieldsets = (
-        (_('Metadata'), {
+        ('Metadata', {
             'classes': ('wide',),
             'fields': (
                 ('name', 'tag', 'is_active'),
                 'description',
             )
         }),
-        (_("Operation"), {
+        ("Operation", {
             'classes': ('wide',),
             'fields': (
                 'func',
@@ -27,7 +26,7 @@ class JobAdmin(admin.ModelAdmin):
                 'opts',
             )
         }),
-        (_("Scheduling"), {
+        ("Scheduling", {
             'classes': ('wide',),
             'fields': (
                 ('sec', 'min', 'hou', 'dom', 'mon', 'dow', 'yea'),
@@ -37,12 +36,12 @@ class JobAdmin(admin.ModelAdmin):
 
     def next_time(self, obj):
         return utils.get_next_time(obj) or '-'
-    next_time.short_description = _("Next run")
+    next_time.short_description = "Next run"
 
     def make_disable(self, request, queryset):
         queryset.update(is_active=False)
-    make_disable.short_description = _("Disable job(s)")
+    make_disable.short_description = "Disable job(s)"
 
     def make_enable(self, request, queryset):
         queryset.update(is_active=True)
-    make_enable.short_description = _("Enable job(s)")
+    make_enable.short_description = "Enable job(s)"

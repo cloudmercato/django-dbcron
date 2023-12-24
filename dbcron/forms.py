@@ -1,36 +1,35 @@
 from django import forms
-from django.utils.translation import ugettext_lazy as _
 from dbcron import models
 
 
 class AbstractJobForm:
     sec = forms.CharField(
         initial='0',
-        label=_("Second(s)")
+        label="Second(s)"
     )
     min = forms.CharField(
         initial='*',
-        label=_("Minute(s)")
+        label="Minute(s)"
     )
     hou = forms.CharField(
         initial='*',
-        label=_("Hour(s)")
+        label="Hour(s)"
     )
     dom = forms.CharField(
         initial='*',
-        label=_("Day(s) of month")
+        label="Day(s) of month"
     )
     mon = forms.CharField(
         initial='*',
-        label=_("Month")
+        label="Month"
     )
     dow = forms.CharField(
         initial='*',
-        label=_("Day(s) of week")
+        label="Day(s) of week"
     )
     yea = forms.CharField(
         initial='*',
-        label=_("Year(s)")
+        label="Year(s)"
     )
 
 
